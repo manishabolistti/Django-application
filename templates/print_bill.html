@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+
+        .invoice-container {
+            width: 80%;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            height: 14.85cm; /* Half of A4 height (29.7cm / 2) */
+        }
+
+        /* Add space for the header */
+        .invoice-header-space {
+            height: 3cm; /* Reserve 3cm for the hard copy header */
+        }
+
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .invoice-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: #333;
+        }
+
+        .invoice-header p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .invoice-details {
+            margin-bottom: 20px;
+        }
+
+        .invoice-details ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .invoice-details ul li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .table {
+            margin-bottom: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .table th {
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd; /* Row borders only */
+        }
+
+        .summary {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .summary ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .summary ul li {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn-container .btn {
+            margin: 5px;
+        }
+
+        /* Footer */
+        .invoice-footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .invoice-container {
+                width: 100%;
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                height: 14.85cm; /* Half of A4 height */
+            }
+
+            .invoice-header-space {
+                height: 3cm; /* Ensure the reserved header space is maintained */
+            }
+
+            .invoice-footer {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                text-align: center;
+                font-size: 0.8rem;
+                color: #666;
+                border-top: 1px solid #ddd;
+                padding: 10px 0;
+            }
+
+            /* Page break for multi-page printing */
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Space for the hard copy header -->
+    <div class="invoice-header-space"></div>
+
+    <div class="invoice-container">
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <h1>Invoice</h1>
+            <p>Thank you for your purchase!</p>
+        </div>
+
+        <!-- Customer Details -->
+        <div class="invoice-details">
+            <ul>
+                <li><strong>Customer Name:</strong> {{ bill.customer_name }}</li>
+                <li><strong>Customer Phone:</strong> {{ bill.customer_phone }}</li>
+                <li><strong>Purchase Date:</strong> {{ bill.purchase_date|date:"d M Y, H:i" }}</li>
+            </ul>
+        </div>
+
+        <!-- Items Table -->
+        <h3>Items</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in bill.items %}
+                <tr>
+                    <td>{{ item.category }}</td>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.rate }}</td>
+                    <td>{{ item.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Summary -->
+        <div class="summary">
+            <ul>
+                <li><strong>Subtotal:</strong> ₹{{ bill.Sub_total }}</li>
+                <li><strong>GST (3%):</strong> ₹{{ bill.GST }}</li>
+                <li><strong>Total:</strong> ₹{{ bill.Total }}</li>
+            </ul>
+        </div>
+
+        <!-- Buttons -->
+        <div class="btn-container no-print">
+            <button class="btn btn-primary" onclick="window.print()">Print</button>
+            <a href="{% url 'bill_data' %}" class="btn btn-secondary">Back</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="invoice-footer">
+        This is a system-generated invoice. Thank you for your business!
+    </div>
+</body>
+</html>

@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Generate Bill - My App
+{% endblock title %}
+
+{% block content %}
+<h1>Generate Bill</h1>
+
+<!-- Toast Notification -->
+<div aria-live="polite" aria-atomic="true" style="position: relative; min-height: 100px;">
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<form id="bill-form" action="{% url 'bill_data' %}" method="post">
+    {% csrf_token %}
+    <h3>Customer Details</h3>
+    <div class="form-group">
+        {{ form.customer_name.label_tag }}
+        {{ form.customer_name }}
+    </div>
+    <div class="form-group">
+        {{ form.customer_phone.label_tag }}
+        {{ form.customer_phone }}
+    </div>
+
+    <h3>Items</h3>
+    {{ item_formset.management_form }}
+    <table class="table" id="items-table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Item Name</th>
+                <th>Quantity Purchased</th>
+                <th>Rate per Unit</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in item_formset %}
+            <tr class="item-row">
+                <td>{{ form.category }}</td>
+                <td>{{ form.item }}</td>
+                <td>{{ form.quantity }}</td>
+                <td>{{ form.rate }}</td>
+                <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="button" id="add-item" class="btn btn-secondary">Add Item</button>
+    <button type="submit" name="preview" class="btn btn-secondary">Preview</button>
+    <button type="submit" name="submit" class="btn btn-primary">Submit</button>
+</form>
+
+{% if preview_data %}
+<h3>Preview</h3>
+<div class="card">
+    <div class="card-body">
+        <h5>Customer Details</h5>
+        <p><strong>Name:</strong> {{ preview_data.customer_name }}</p>
+        <p><strong>Phone:</strong> {{ preview_data.customer_phone }}</p>
+
+        <h5>Items</h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in preview_data.items %}
+                <tr>
+                    <td>{{ item.category }}</td>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.rate }}</td>
+                    <td>{{ item.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h5>Summary</h5>
+        <p><strong>Subtotal:</strong> {{ preview_data.subtotal }}</p>
+        <p><strong>GST (3%):</strong> {{ preview_data.gst }}</p>
+        <p><strong>Total:</strong> {{ preview_data.total }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if saved_bill %}
+<h3>Saved Bill</h3>
+<div class="card">
+    <div class="card-body">
+        <h5>Customer Details</h5>
+        <p><strong>Name:</strong> {{ saved_bill.customer_name }}</p>
+        <p><strong>Phone:</strong> {{ saved_bill.customer_phone }}</p>
+        <p><strong>Purchase Date:</strong> {{ saved_bill.purchase_date }}</p>
+
+        <h5>Items</h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in saved_bill.items %}
+                <tr>
+                    <td>{{ item.category }}</td>
+                    <td>{{ item.item_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.rate }}</td>
+                    <td>{{ item.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h5>Summary</h5>
+        <p><strong>Subtotal:</strong> {{ saved_bill.Sub_total }}</p>
+        <p><strong>GST:</strong> {{ saved_bill.GST }}</p>
+        <p><strong>Total:</strong> {{ saved_bill.Total }}</p>
+        <a href="{% url 'print_bill' saved_bill.id %}" class="btn btn-primary">Print Bill</a>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize Bootstrap Toasts
+        const toastElements = document.querySelectorAll('.toast');
+        toastElements.forEach(function (toastElement) {
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+        });
+
+        const addItemButton = document.getElementById('add-item');
+        const itemsTable = document.getElementById('items-table');
+        const totalForms = document.querySelector('input[name="form-TOTAL_FORMS"]');
+
+        // Add a new item row
+        addItemButton.addEventListener('click', function () {
+            const currentFormCount = parseInt(totalForms.value);
+            const newFormCount = currentFormCount + 1;
+
+            const lastRow = itemsTable.querySelector('.item-row:last-child');
+            const newRow = lastRow.cloneNode(true);
+
+            newRow.innerHTML = newRow.innerHTML.replace(/form-(\d+)-/g, `form-${newFormCount}-`);
+            newRow.querySelectorAll('input, select').forEach(input => input.value = '');
+
+            itemsTable.querySelector('tbody').appendChild(newRow);
+            totalForms.value = newFormCount;
+        });
+
+        // Remove an item row
+        itemsTable.addEventListener('click', function (event) {
+            if (event.target.classList.contains('remove-item')) {
+                const row = event.target.closest('.item-row');
+                row.remove();
+                totalForms.value = parseInt(totalForms.value) - 1;
+            }
+        });
+
+        // Dynamically populate the item dropdown based on the selected category
+        itemsTable.addEventListener('change', function (event) {
+            if (event.target.classList.contains('category-select')) {
+                const categoryId = event.target.value;
+                const itemFieldName = event.target.name.replace('category', 'item');
+                const itemField = document.querySelector(`select[name="${itemFieldName}"]`);
+
+                fetch(`/get-items/${categoryId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        itemField.innerHTML = '<option value="">---------</option>';
+                        data.items.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = item.item_name;
+                            itemField.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching items:', error));
+            }
+        });
+    });
+</script>
+{% endblock content %}

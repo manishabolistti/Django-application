@@ -1,0 +1,4 @@
+.table-header-gradient {
+    background: linear-gradient(90deg, #A30000, #5C4033); /* Gradient background */
+    color: white; /* White text for better contrast */
+}

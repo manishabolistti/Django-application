@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Item Tables
+{% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Products</h1>
+
+    <div class="row">
+        {% for stock in stocks %}
+        <div class="col-sm mb-4">
+            <h2>{{ stock.category_name }}</h2>
+    
+            <table class="table table-bordered table-striped">
+                <thead class="table-header-gradient">
+                    <tr>
+                        <th>Item Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stock.item_set.all %}
+                    <tr>
+                        <td>{{ item.item_name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

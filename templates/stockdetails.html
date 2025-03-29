@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Stock Overview
+{% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Stock Overview</h1>
+
+    <h4>Charts</h4>
+    <div class="row w-75 p-3">
+        {% for stock in stock_data %}
+        <div class="col-sm">
+            <canvas id="chart-{{ forloop.counter }}" width="200" height="200"></canvas>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Stock Table -->
+    <h2 class="mt-5">Stock Details</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Category Name</th>
+                <th>Initial Stock</th>
+                <th>Current Stock</th>
+                <th>Total Sold</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stock in stock_data %}
+            <tr>
+                <td>{{ stock.category_name }}</td>
+                <td>{{ stock.initial_stock }}</td>
+                <td>{{ stock.current_stock }}</td>
+                <td>{{ stock.total_sold }}</td> <!-- Calculate Total Sold -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Get data from the Django context
+    const labels = {{ labels|safe }};
+    const initialStockValues = {{ initial_stock_values|safe }};
+    const currentStockValues = {{ current_stock_values|safe }};
+    const totalSoldValues = {{ total_sold_values|safe }};
+
+    console.log('Labels:', labels); // Debugging
+    console.log('Initial Stock Values:', initialStockValues); // Debugging
+    console.log('Current Stock Values:', currentStockValues); // Debugging
+    console.log('Total Sold Values:', totalSoldValues); // Debugging
+
+    // Function to generate random colors
+    function generateRandomColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            colors.push(`rgba(${r}, ${g}, ${b}, 0.6)`);
+        }
+        return colors;
+    }
+
+    // Render separate pie charts for each category
+    labels.forEach((label, index) => {
+        const ctx = document.getElementById(`chart-${index + 1}`).getContext('2d');
+        const backgroundColors = generateRandomColors(3); // Generate 3 random colors for each chart
+        const borderColors = backgroundColors.map(color => color.replace('0.6', '1')); // Adjust opacity for borders
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Initial Stock', 'Current Stock', 'Total Sold'],
+                datasets: [
+                    {
+                        data: [
+                            initialStockValues[index],
+                            currentStockValues[index],
+                            totalSoldValues[index]
+                        ],
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return `${tooltipItem.label}: ${tooltipItem.raw}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock content %}
