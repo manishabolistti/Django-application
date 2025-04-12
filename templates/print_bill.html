@@ -24,7 +24,6 @@
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             position: relative;
-            height: 14.85cm; /* Half of A4 height (29.7cm / 2) */
         }
 
         /* Add space for the header */
@@ -201,10 +200,11 @@
         </div>
 
         <!-- Items Table -->
-        <h3>Items</h3>
+        <!-- <h3>Items</h3> -->
         <table class="table">
             <thead>
                 <tr>
+                    <th>S.No</th>
                     <th>Category</th>
                     <th>Item Name</th>
                     <th>Quantity</th>
@@ -215,6 +215,7 @@
             <tbody>
                 {% for item in bill.items %}
                 <tr>
+                    <td> {{forloop.counter}}</td>
                     <td>{{ item.category }}</td>
                     <td>{{ item.item_name }}</td>
                     <td>{{ item.quantity }}</td>
