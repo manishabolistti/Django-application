@@ -193,7 +193,12 @@ Generate Bill - My App
                 const itemField = document.querySelector(`select[name="${itemFieldName}"]`);
 
                 fetch(`/get-items/${categoryId}/`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         itemField.innerHTML = '<option value="">---------</option>';
                         data.items.forEach(item => {

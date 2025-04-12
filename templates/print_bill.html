@@ -35,6 +35,8 @@
         .invoice-header {
             text-align: center;
             margin-bottom: 20px;
+            font-family: revert;
+            text-transform: uppercase;
         }
 
         .invoice-header h1 {
@@ -50,19 +52,29 @@
         }
 
         .invoice-details {
-            margin-bottom: 20px;
-        }
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
 
-        .invoice-details ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+    .details-right {
+        width: 30%; /* Adjust width as needed */
+    }
 
-        .invoice-details ul li {
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
+    .details-left {
+        width: 70%; /* Adjust width as needed */
+    }
+
+    .details-left ul, .details-right ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .details-left li, .details-right li {
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
 
         .table {
             margin-bottom: 20px;
@@ -162,22 +174,30 @@
 </head>
 <body>
     <!-- Space for the hard copy header -->
-    <div class="invoice-header-space"></div>
+    <!-- <div class="invoice-header-space"></div> -->
 
     <div class="invoice-container">
         <!-- Invoice Header -->
         <div class="invoice-header">
-            <h1>Invoice</h1>
-            <p>Thank you for your purchase!</p>
+            <h1 style="text-decoration: underline;">Vaarahi jewllers</h1>
+            <h3>Bill/Invoice</h1>
+            <!-- <p>Thank you for your purchase!</p> -->
         </div>
 
         <!-- Customer Details -->
         <div class="invoice-details">
-            <ul>
-                <li><strong>Customer Name:</strong> {{ bill.customer_name }}</li>
-                <li><strong>Customer Phone:</strong> {{ bill.customer_phone }}</li>
-                <li><strong>Purchase Date:</strong> {{ bill.purchase_date|date:"d M Y, H:i" }}</li>
-            </ul>
+            <div class="details-left">
+                <ul>
+                    <li><strong>Customer Name:</strong> {{ bill.customer_name }}</li>
+                    <li><strong>Customer Phone:</strong> {{ bill.customer_phone }}</li>
+                </ul>
+            </div>
+            <div class="details-right">
+                <ul>
+                    <li><strong>Bill No:</strong> {{ bill.id }}</li>
+                    <li><strong>Date:</strong> {{ bill.purchase_date|date:"d M Y" }}</li>
+                </ul>
+            </div>
         </div>
 
         <!-- Items Table -->
@@ -188,7 +208,7 @@
                     <th>Category</th>
                     <th>Item Name</th>
                     <th>Quantity</th>
-                    <th>Rate</th>
+                    <!-- <th>Rate</th> -->
                     <th>Total</th>
                 </tr>
             </thead>
@@ -198,7 +218,7 @@
                     <td>{{ item.category }}</td>
                     <td>{{ item.item_name }}</td>
                     <td>{{ item.quantity }}</td>
-                    <td>{{ item.rate }}</td>
+                    <!-- <td>{{ item.rate }}</td> -->
                     <td>{{ item.total }}</td>
                 </tr>
                 {% endfor %}
@@ -209,21 +229,91 @@
         <div class="summary">
             <ul>
                 <li><strong>Subtotal:</strong> ₹{{ bill.Sub_total }}</li>
-                <li><strong>GST (3%):</strong> ₹{{ bill.GST }}</li>
+                <li><strong>CGST (1.5%):</strong> ₹{{ cgst|floatformat:2 }}</li>
+                <li><strong>SGST (1.5%):</strong> ₹{{ sgst|floatformat:2 }}</li>
                 <li><strong>Total:</strong> ₹{{ bill.Total }}</li>
             </ul>
+            <div id="paymentBreakdown" style="margin-top: 20px; font-size: 1rem; color: #333;">
+                <h4>Payment Breakdown</h4>
+                <ul id="paymentList">
+                    <!-- Payment details will be appended here -->
+                </ul>
+                <p><strong>Total Paid:</strong> ₹<span id="totalPaid">0</span></p>
+            </div>
         </div>
 
-        <!-- Buttons -->
         <div class="btn-container no-print">
+            <label for="cardAmount">Card:</label>
+            <input type="number" id="cardAmount" placeholder="Enter card amount" class="form-control" style="display: inline-block; width: auto; margin-right: 10px;">
+            
+            <label for="cashAmount">Cash:</label>
+            <input type="number" id="cashAmount" placeholder="Enter cash amount" class="form-control" style="display: inline-block; width: auto; margin-right: 10px;">
+            
+            <label for="OG">OG:</label>
+            <input type="number" id="OG" placeholder="Enter OG amount" class="form-control" style="display: inline-block; width: auto; margin-right: 10px;">
+            
+            <button class="btn btn-success" onclick="addPaymentDetails()">Add Payment</button>
+            <button class="btn btn-primary" onclick="window.print()">Print</button>
+            <a href="{% url 'bill_data' %}" class="btn btn-secondary">Back</a> 
+        </div>
+
+        
+
+        <!-- Buttons -->
+        <!-- <div class="btn-container no-print">
             <button class="btn btn-primary" onclick="window.print()">Print</button>
             <a href="{% url 'bill_data' %}" class="btn btn-secondary">Back</a>
-        </div>
+        </div> -->
     </div>
 
     <!-- Footer -->
     <div class="invoice-footer">
-        This is a system-generated invoice. Thank you for your business!
+        <b>Address:</b> Vemulavasa, Visakhapatnam, Andhra Pradesh, India.  GST No: ******, PAN No: ******<br>
     </div>
+
+    <script>
+        function addPaymentDetails() {
+            // Get the input values
+            const cardAmount = parseFloat(document.getElementById('cardAmount').value) || 0;
+            const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+            const OG = parseFloat(document.getElementById('OG').value) || 0;
+    
+            // Calculate the total paid
+            const totalPaid = cardAmount + cashAmount + OG;
+    
+            // Update the payment breakdown
+            const paymentList = document.getElementById('paymentList');
+            paymentList.innerHTML = ''; // Clear the existing list
+    
+            // Add Card payment if greater than 0
+            if (cardAmount > 0) {
+                const cardItem = document.createElement('li');
+                cardItem.innerHTML = `<strong>Card:</strong> ₹${cardAmount.toFixed(2)}`;
+                paymentList.appendChild(cardItem);
+            }
+    
+            // Add Cash payment if greater than 0
+            if (cashAmount > 0) {
+                const cashItem = document.createElement('li');
+                cashItem.innerHTML = `<strong>Cash:</strong> ₹${cashAmount.toFixed(2)}`;
+                paymentList.appendChild(cashItem);
+            }
+    
+            // Add OG payment if greater than 0
+            if (OG > 0) {
+                const otherItem = document.createElement('li');
+                otherItem.innerHTML = `<strong>OG:</strong> ₹${OG.toFixed(2)}`;
+                paymentList.appendChild(otherItem);
+            }
+    
+            // Update the total paid amount
+            document.getElementById('totalPaid').textContent = totalPaid.toFixed(2);
+    
+            // Clear the input fields
+            document.getElementById('cardAmount').value = '';
+            document.getElementById('cashAmount').value = '';
+            document.getElementById('OG').value = '';
+        }
+    </script>
 </body>
 </html>

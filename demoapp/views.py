@@ -104,7 +104,7 @@ def bill_data(request):
     try:
         if request.method == 'POST':
             bill_form = BillForm(request.POST)
-            item_formset = BillItemFormSet(request.POST, form_kwargs={'data': request.POST})
+            item_formset = BillItemFormSet(request.POST)
 
             if 'preview' in request.POST:
                 if bill_form.is_valid() and item_formset.is_valid():
@@ -115,7 +115,8 @@ def bill_data(request):
                     }
                     subtotal = 0
                     for form in item_formset:
-                        if form.cleaned_data:
+                        # Process only valid forms with data
+                        if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
                             category = form.cleaned_data['category']
                             item = form.cleaned_data['item']
                             quantity = form.cleaned_data['quantity']
@@ -129,7 +130,7 @@ def bill_data(request):
                                 'rate': rate,
                                 'total': item_total
                             })
-                    gst = subtotal * 0.3
+                    gst = subtotal * 0.03
                     total = subtotal + gst
                     preview_data['subtotal'] = subtotal
                     preview_data['gst'] = gst
@@ -144,7 +145,8 @@ def bill_data(request):
                     items = []
                     subtotal = 0
                     for form in item_formset:
-                        if form.cleaned_data:
+                        # Process only valid forms with data
+                        if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
                             category = form.cleaned_data['category']
                             item = form.cleaned_data['item']
                             quantity = form.cleaned_data['quantity']
@@ -159,7 +161,7 @@ def bill_data(request):
                                 'rate': rate,
                                 'total': item_total
                             })
-                    gst = subtotal * 0.3
+                    gst = subtotal * 0.03
                     total = subtotal + gst
                     bill.Sub_total = subtotal
                     bill.GST = gst
@@ -182,7 +184,6 @@ def bill_data(request):
         'preview_data': preview_data,
         'saved_bill': saved_bill
     })
-
 # Get Items View
 def get_items(request, category_id):
     try:
@@ -220,8 +221,10 @@ def add_item(request):
 def print_bill(request, bill_id):
     try:
         bill = get_object_or_404(Bill, id=bill_id)
+        cgst = bill.GST / 2
+        sgst = bill.GST / 2
         messages.success(request, "Bill loaded successfully!")
-        return render(request, 'print_bill.html', {'bill': bill})
+        return render(request, 'print_bill.html', {'bill': bill,'cgst': cgst,'sgst': sgst})
     except Exception as e:
         messages.error(request, f"Error loading bill: {e}")
         return render(request, 'print_bill.html', {'bill': None})

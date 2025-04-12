@@ -69,7 +69,7 @@ class Bill(models.Model):
             self.Sub_total = sum(item['quantity'] * item['rate'] for item in self.items)
 
             # Calculate GST (e.g., 3% GST)
-            gst_rate = 0.3  # 3% GST
+            gst_rate = 0.03  # 3% GST
             self.GST = self.Sub_total * gst_rate
 
             # Calculate the total amount
